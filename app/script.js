@@ -5,6 +5,7 @@ const btn = document.getElementById("btn");
 btn.addEventListener('click', function() {
     const input_city = document.getElementById("city").value;
     getWeatherData(input_city);
+    // whereAmI(52.508, 13.381);
 
 
     // old code
@@ -50,12 +51,50 @@ function getWeatherData(city) {
 
     })
 }
+const whereAmI = function (lat, lng){
+    fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}`)
+    .then(response => {
+        // console.log(response);
+
+        if (!response.ok) throw new Error(`Problem in fetching the data of the city required has been found. Error (${response.status})`);
+
+        return response.json();
+    })
+    .then(data => {
+
+        // console.log(data);
+        console.log(`You are in ${data.city}, ${data.countryName}`);
+        return fetch(`https://api.openweathermap.org/data/2.5/weather?q=${data.city}&appid=f0856bb6b955b94778891437ad5c5e71`);
+    })
+    .then(res => {
+        if(!res.ok) throw new Error(`Problem in fetching the data of the city required has been found. Error (${response.status})`);
+
+        return res.json();
+    })
+    .then(data => {
+        console.log(data);
+        renderCity(data);
+    })
+    .catch(err => {
+        handleErrors(` ${err}`);
+    })
+    .finally(() => {
+        container.classList.remove("none");
+    })
+}
+
+
+whereAmI();
+// whereAmI(19.037, 72.873);
+// whereAmI(-33.933, 18.474);
+
+
+
 
 const handleErrors = function (mssg) {
     container.innerHTML = "";
     container.insertAdjacentText('beforeend', mssg);
 }
-
 
 function renderCity (data) {
     container.classList.add("none");
@@ -85,7 +124,7 @@ function renderCity (data) {
     console.log("=============beforeend==============");
     container.innerHTML = "";
     container.insertAdjacentHTML("beforeend", html);
-    container.style.opacity = 1;
+    // container.style.opacity = 1;
 
 }
 
