@@ -1,11 +1,15 @@
 const container = document.querySelector(".container");
 const btn = document.getElementById("btn");
 
-// console.log(container.value);
+
+
 btn.addEventListener('click', function() {
+    container.classList.add("none");
+    
     const input_city = document.getElementById("city").value;
     getWeatherData(input_city);
-    // whereAmI(52.508, 13.381);
+
+    // whereAmI();
 
 
     // old code
@@ -21,11 +25,25 @@ btn.addEventListener('click', function() {
     // request.send();
 
 
-    //new code
+    
 
 
 });
+const getPos = function(){
+    return new Promise(function(resolve, reject) {
+        // navigator.geolocation.getCurrentPosition(
+        //     position => resolve(position),
+        //     err => reject(err)
+        // );
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+    });
+}
 
+
+
+
+
+//new code
 function getWeatherData(city) {
     fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=f0856bb6b955b94778891437ad5c5e71`)
     .then((response) => {
@@ -51,42 +69,60 @@ function getWeatherData(city) {
 
     })
 }
-const whereAmI = function (lat, lng){
-    fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}`)
-    .then(response => {
-        // console.log(response);
-
-        if (!response.ok) throw new Error(`Problem in fetching the data of the city required has been found. Error (${response.status})`);
-
-        return response.json();
-    })
-    .then(data => {
-
-        // console.log(data);
-        console.log(`You are in ${data.city}, ${data.countryName}`);
-        return fetch(`https://api.openweathermap.org/data/2.5/weather?q=${data.city}&appid=f0856bb6b955b94778891437ad5c5e71`);
-    })
-    .then(res => {
-        if(!res.ok) throw new Error(`Problem in fetching the data of the city required has been found. Error (${response.status})`);
-
-        return res.json();
-    })
-    .then(data => {
-        console.log(data);
-        renderCity(data);
-    })
-    .catch(err => {
+async function whereAmI (){
+    try {
+        const geoResponse = await getPos();
+        const {latitude:lat , longitude: lng} = geoResponse.coords;
+    
+        const countryRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}`);
+        const countryRes_data = await countryRes.json();
+    
+        const country_weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${countryRes_data.city}&appid=f0856bb6b955b94778891437ad5c5e71`);
+        const country_weatherRes_data = await country_weatherRes.json();
+    
+        renderCity(country_weatherRes_data);
+    } catch(error) {
         handleErrors(` ${err}`);
-    })
-    .finally(() => {
-        container.classList.remove("none");
-    })
+    }
+
+
+    // old code lol
+    // getPos().then(pos => {
+    //     console.log(pos);
+    //     console.log(pos.coords.latitude);
+    //     const {latitude:lat , longitude: lng} = pos.coords;
+    //     return fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}`)
+    // })
+    // .then(response => {
+    //     // console.log(response);
+
+    //     if (!response.ok) throw new Error(`Problem in fetching the data of the city required has been found. Error (${response.status})`);
+
+    //     return response.json();
+    // })
+    // .then(data => {
+
+    //     // console.log(data);
+    //     console.log(`You are in ${data.city}, ${data.countryName}`);
+    //     return fetch(`https://api.openweathermap.org/data/2.5/weather?q=${data.city}&appid=f0856bb6b955b94778891437ad5c5e71`);
+    // })
+    // .then(res => {
+    //     if(!res.ok) throw new Error(`Problem in fetching the data of the city required has been found. Error (${response.status})`);
+
+    //     return res.json();
+    // })
+    // .then(data => {
+    //     console.log(data);
+    //     renderCity(data);
+    // })
+    // .catch(err => {
+    //     handleErrors(` ${err}`);
+    // })
+    // .finally(() => {
+    //     container.classList.remove("none");
+    // })
 }
 
-
-whereAmI();
-// whereAmI(19.037, 72.873);
-// whereAmI(-33.933, 18.474);
 
 
 
@@ -94,6 +130,7 @@ whereAmI();
 const handleErrors = function (mssg) {
     container.innerHTML = "";
     container.insertAdjacentText('beforeend', mssg);
+    console.log(mssg);
 }
 
 function renderCity (data) {
@@ -124,6 +161,8 @@ function renderCity (data) {
     console.log("=============beforeend==============");
     container.innerHTML = "";
     container.insertAdjacentHTML("beforeend", html);
+    container.classList.remove("none");
+
     // container.style.opacity = 1;
 
 }
@@ -149,3 +188,4 @@ function convert_to_hour(timestamp) {
     return `${hour.toString().padStart(2,'0')}: ${minute.toString().padStart(2,'0')}`
 }
 
+whereAmI();
